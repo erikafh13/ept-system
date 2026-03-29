@@ -11,12 +11,13 @@ def init_session():
         "name": "",
         "role": "user",
         "test_active": False,
-        "test_section": "listening",   # listening | structure | reading
+        "test_section": "listening",
         "test_idx": 0,
-        "answers": {},                  # { "listening_0": 2, ... }
-        "questions_today": {},          # { listening: [], structure: [], reading: [] }
+        "answers": {},
+        "questions_today": {},
         "test_done": False,
         "last_score": None,
+        "wa_result_sent": False,
     }
     for key, val in defaults.items():
         if key not in st.session_state:

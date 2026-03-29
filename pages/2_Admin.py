@@ -109,17 +109,17 @@ with tab_q:
             if not all([q_q, oa, ob, oc, od]):
                 st.error("Lengkapi semua field!")
             else:
-                add_question({"date": sel_str, "no": q_no, "type": q_type,
+                add_question({"date": sel_str, "pool_id": pool_id, "no": q_no, "type": q_type,
                     "question": q_q, "option_a": oa, "option_b": ob,
                     "option_c": oc, "option_d": od,
                     "correct": correct_map[correct_raw],
-                    "script": q_script, "passage": q_passage})
+                    "script": q_script, "passage": q_passage}),"difficulty": difficulty
                 st.success("✅ Soal disimpan!"); st.rerun()
 
     st.markdown("---")
     st.markdown("### 📤 Bulk Upload CSV")
     st.markdown("""
-    **Format kolom:** `date, no, type, question, option_a, option_b, option_c, option_d, correct, script, passage`
+    **Format kolom:** `date, pool_id, no, type, question, option_a, option_b, option_c, option_d, correct, script, passage, difficulty`
     - `correct`: 0=A, 1=B, 2=C, 3=D
     """)
     uploaded = st.file_uploader("Upload CSV", type=["csv"])
@@ -127,14 +127,47 @@ with tab_q:
         df_up = pd.read_csv(uploaded)
         st.dataframe(df_up.head())
         if st.button("⬆️ Import dari CSV", type="primary"):
-            for _, row in df_up.iterrows():
-                add_question(row.to_dict())
-            st.success(f"✅ {len(df_up)} soal diimport!"); st.rerun()
+            success = 0
+            failed = 0
 
-    tmpl = pd.DataFrame([{"date": date.today().isoformat(), "no":1, "type":"listening",
-        "question":"What does the man want?", "option_a":"Go home","option_b":"Buy food",
-        "option_c":"Study","option_d":"Sleep","correct":0,
-        "script":"Man: I want to go home.","passage":""}])
+            for i, row in df_up.iterrows():
+                try:
+                    data = row.to_dict()
+
+                    # CLEAN NaN
+                    clean_data = {
+                        k: ("" if pd.isna(v) else v)
+                        for k, v in data.items()
+                    }
+
+                    # AUTO DATE kalau kosong
+                    if not clean_data.get("date"):
+                        clean_data["date"] = date.today().isoformat()
+
+                    add_question(clean_data)
+                    success += 1
+
+                except Exception as e:
+                    failed += 1
+                    st.error(f"Baris {i} error: {e}")
+
+            st.success(f"✅ Import selesai: {success} berhasil, {failed} gagal")
+
+    tmpl = pd.DataFrame([{
+        "date": date.today().isoformat(),
+        "pool_id": "L001",
+        "no": 1,
+        "type": "listening",
+        "question": "What does the man want?",
+        "option_a": "Go home",
+        "option_b": "Buy food",
+        "option_c": "Study",
+        "option_d": "Sleep",
+        "correct": 0,
+        "script": "Man: I want to go home.",
+        "passage": "",
+        "difficulty": "easy"
+    }])
     st.download_button("📥 Download Template CSV",
         data=tmpl.to_csv(index=False).encode("utf-8"),
         file_name="template_soal_ept.csv", mime="text/csv")

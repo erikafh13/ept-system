@@ -107,10 +107,14 @@ with col_timer:
     st.markdown(f"""<div class="timer-box" style="border-color:{timer_color};color:{timer_color};">
         ⏱ {mins:02d}:{secs:02d}
     </div>""", unsafe_allow_html=True)
-    # Auto update timer tiap 1 detik
-    if remaining > 0:
-        time.sleep(1)
-        st.rerun()
+
+# Rerun TERKONTROL (bukan di dalam UI block)
+if "last_tick" not in st.session_state:
+    st.session_state.last_tick = time.time()
+
+if remaining > 0 and (time.time() - st.session_state.last_tick >= 1):
+    st.session_state.last_tick = time.time()
+    st.rerun()
 
 st.progress(total_done / total_all if total_all > 0 else 0)
 st.markdown("<br>", unsafe_allow_html=True)

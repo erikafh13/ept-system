@@ -272,3 +272,25 @@ html, body, [class*="css"] {
     padding: 0.5rem 1rem !important;
 }
 .stMetric { background: #F8FAFC; border-radius: 12px; padding: 1rem; }
+
+/* ── Timer Box ────────────────────────────────────────────────────── */
+.timer-box {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 0.4rem 0.8rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* ── Question Number ──────────────────────────────────────────────── */
+.question-num {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #94A3B8;
+    margin-bottom: 0.5rem;
+}

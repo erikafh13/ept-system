@@ -203,3 +203,63 @@ Pull request dan issue sangat disambut! Untuk perubahan besar, buka issue terleb
 ## 📄 Lisensi
 
 MIT License — bebas digunakan dan dimodifikasi.
+
+---
+
+## 🆕 Fitur Tambahan (Update)
+
+### ⏱️ Timer Countdown
+- Timer 90 menit berjalan selama simulasi
+- Warna berubah: hijau → kuning (15 menit tersisa) → merah (5 menit tersisa)
+- Auto-submit otomatis saat waktu habis
+
+### 📲 Notifikasi WhatsApp (via Fonnte)
+| Notifikasi | Trigger |
+|-----------|---------|
+| Admin: soal belum ada | Otomatis / manual dari dashboard |
+| User: pengingat latihan | Blast manual dari admin |
+| User: hasil tes | Otomatis setelah tes selesai |
+| Admin: ringkasan harian | Manual dari panel admin |
+
+**Setup Fonnte:**
+1. Daftar di [fonnte.com](https://fonnte.com)
+2. Sambungkan nomor WA device kamu
+3. Salin token ke `secrets.toml`
+
+### 🔍 Analisis Soal (Sheet: AnswerLog)
+- Soal dengan tingkat kesalahan tertinggi (per section & tanggal)
+- Profil kekuatan/kelemahan per user
+- Tren akurasi harian per section
+- Perbandingan performa antar user
+
+### 🏆 Leaderboard
+- Peringkat harian, mingguan, bulanan, all-time
+- Top 3 dengan podium visual
+- Posisi user sendiri ditampilkan
+
+### 📚 Bank Materi Belajar
+- Tips & strategi per section (Listening, Structure, Reading)
+- Materi grammar lengkap (tenses, conditional, passive voice, dll)
+- Jadwal belajar ideal
+- Rekomendasi app & sumber belajar
+
+### 💡 Rekomendasi Otomatis
+- Setelah tes, sistem memberikan rekomendasi belajar berdasarkan bagian yang lemah
+
+## 🗃️ Sheet Baru yang Perlu Ditambahkan
+
+Tambahkan **Sheet 4: `AnswerLog`** di spreadsheet kamu:
+
+| Kolom | Keterangan |
+|-------|-----------|
+| username | Username user |
+| date | Tanggal pengerjaan |
+| question_date | Tanggal soal yang dikerjakan |
+| section | listening / structure / reading |
+| q_no | Nomor soal |
+| is_correct | 1 = benar, 0 = salah |
+| user_answer | Jawaban user (0-3) |
+| correct_answer | Kunci jawaban (0-3) |
+| timestamp | Waktu pengerjaan |
+
+*(Sheet ini diisi otomatis, tidak perlu diisi manual)*

@@ -24,3 +24,9 @@ init_session()
 if not st.session_state.get("logged_in"):
     login_page()
     st.stop()
+
+# setelah login → redirect SEKALI saja
+if st.session_state.get("role") == "admin":
+    st.switch_page("pages/2_Admin.py")
+else:
+    st.switch_page("pages/1_Dashboard.py")

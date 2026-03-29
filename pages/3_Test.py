@@ -108,11 +108,11 @@ with col_timer:
         ⏱ {mins:02d}:{secs:02d}
     </div>""", unsafe_allow_html=True)
 
-# Rerun TERKONTROL (bukan di dalam UI block)
 if "last_tick" not in st.session_state:
     st.session_state.last_tick = time.time()
 
-if remaining > 0 and (time.time() - st.session_state.last_tick >= 1):
+# update tiap 3 detik (lebih aman)
+if remaining > 0 and (time.time() - st.session_state.last_tick >= 3):
     st.session_state.last_tick = time.time()
     st.rerun()
 

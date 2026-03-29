@@ -17,7 +17,8 @@ with open(css_path, encoding="utf-8") as f:
 init_session()
 
 if not st.session_state.get("logged_in"):
-    st.switch_page("app.py")
+    st.warning("Silakan login terlebih dahulu.")
+    st.stop()
 if not st.session_state.get("test_active"):
     st.switch_page("pages/1_Dashboard.py")
 

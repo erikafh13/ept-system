@@ -7,6 +7,8 @@ from datetime import date
 from utils.session import init_session
 from utils.sheets import save_score
 from utils.analytics import save_answer_log
+from gtts import gTTS
+import tempfile
 
 st.set_page_config(page_title="Simulasi EPT", page_icon="📝", layout="centered")
 
@@ -16,12 +18,16 @@ with open(css_path, encoding="utf-8") as f:
 
 init_session()
 
+# Proteksi login TANPA redirect
 if not st.session_state.get("logged_in"):
     st.warning("Silakan login terlebih dahulu.")
     st.stop()
-if not st.session_state.get("test_active"):
-    st.switch_page("pages/1_Dashboard.py")
 
+# Proteksi test aktif TANPA redirect
+if not st.session_state.get("test_active"):
+    st.warning("Silakan mulai test dari dashboard.")
+    st.stop()
+    
 SECTIONS       = ["listening", "structure", "reading"]
 SECTION_ICONS  = {"listening": "🎧", "structure": "📐", "reading": "📖"}
 SECTION_LABELS = {"listening": "Listening", "structure": "Structure", "reading": "Reading"}
@@ -101,55 +107,39 @@ with col_timer:
     st.markdown(f"""<div class="timer-box" style="border-color:{timer_color};color:{timer_color};">
         ⏱ {mins:02d}:{secs:02d}
     </div>""", unsafe_allow_html=True)
+    # Auto update timer tiap 1 detik
+    if remaining > 0:
+        time.sleep(1)
+        st.rerun()
 
 st.progress(total_done / total_all if total_all > 0 else 0)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# FIX: auto-refresh timer setiap 60 detik via Streamlit, bukan setTimeout HTML
-# (setTimeout tidak reliable di Streamlit iframe)
-if remaining > 0:
-    refresh_placeholder = st.empty()
-    with refresh_placeholder:
-        # Tampilkan countdown kecil, akan di-rerun setiap 60 detik
-        next_refresh = min(60, int(remaining))
-        st.markdown(
-            f'<meta http-equiv="refresh" content="{next_refresh}">',
-            unsafe_allow_html=True,
-        )
-
-# ── Konten spesifik bagian ─────────────────────────────────────────────────────
 if section == "listening":
     with st.expander("🎧 Audio Listening", expanded=True):
-        script_text = q_data.get("script", "")
-        if script_text:
-            # Escape karakter berbahaya untuk JavaScript
-            safe = (
-                script_text
-                .replace("\\", "\\\\")
-                .replace("'",  "\\'")
-                .replace('"',  '\\"')
-                .replace("\n", " ")
-                .replace("\r", "")
-            )
-            st.markdown(f"""
-            <div class="tts-container">
-                <p class="tts-script"><em>"{script_text}"</em></p>
-                <button class="tts-btn" onclick="speakText('{safe}')">▶ Putar Audio</button>
-                <button class="tts-btn secondary" onclick="window.speechSynthesis.cancel()">■ Stop</button>
-            </div>
-            <script>
-            function speakText(text) {{
-                window.speechSynthesis.cancel();
-                var u  = new SpeechSynthesisUtterance(text);
-                u.lang  = 'en-US';
-                u.rate  = 0.85;
-                u.pitch = 1.0;
-                window.speechSynthesis.speak(u);
-            }}
-            </script>""", unsafe_allow_html=True)
-        else:
-            st.info("Tidak ada script audio untuk soal ini.")
 
+        script_text = q_data.get("script", "")
+
+        if script_text:
+
+            # Generate audio hanya jika soal berubah
+            if (
+                "tts_audio" not in st.session_state
+                or st.session_state.get("last_text") != script_text
+            ):
+                tts = gTTS(script_text, lang="en")
+
+                tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+                tts.save(tmp_file.name)
+
+                st.session_state.tts_audio = tmp_file.name
+                st.session_state.last_text = script_text
+
+            st.audio(st.session_state.tts_audio)
+
+        else:
+            st.warning("Tidak ada teks untuk audio.")
+            
 elif section == "reading" and q_data.get("passage"):
     with st.expander("📖 Baca Passage", expanded=True):
         st.markdown(

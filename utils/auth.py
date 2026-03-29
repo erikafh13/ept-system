@@ -56,8 +56,8 @@ def login_page() -> None:
         st.markdown('</div>', unsafe_allow_html=True)
 
 
-def logout() -> None:
-    """Hapus semua session state dan kembali ke login."""
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
+def logout():
+    for key in ["logged_in", "username", "role", "name"]:
+        if key in st.session_state:
+            del st.session_state[key]
     st.rerun()

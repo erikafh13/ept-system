@@ -31,7 +31,7 @@ def get_client():
     return gspread.authorize(creds)
 
 
-def get_sheet(sheet_name):
+def _get_sheet(sheet_name):
     client = get_client()
     spreadsheet_id = st.secrets["spreadsheet"]["id"]
     return client.open_by_key(spreadsheet_id).worksheet(sheet_name)
@@ -46,7 +46,7 @@ def sanitize(value):
 
 @st.cache_data(ttl=60)
 def get_user_registry() -> dict:
-    ws = get_sheet("Users")
+    ws = _get_sheet("Users")
     records = ws.get_all_records()
     return {
         row["username"]: {
@@ -60,13 +60,13 @@ def get_user_registry() -> dict:
 
 
 def add_user(username: str, password: str, name: str, role: str = "user", phone: str = ""):
-    ws = get_sheet("Users")
+    ws = _get_sheet("Users")
     ws.append_row([username, password, name, role, phone])
     get_user_registry.clear()
 
 
 def delete_user(username: str):
-    ws = get_sheet("Users")
+    ws = _get_sheet("Users")
     records = ws.get_all_records()
     for i, row in enumerate(records, start=2):
         if row["username"] == username:
@@ -91,7 +91,7 @@ def get_questions_for_date(target_date: str = None) -> dict:
     if target_date is None:
         target_date = date.today().isoformat()
 
-    ws = get_sheet("Questions")
+    ws = _get_sheet("Questions")
     records = ws.get_all_records()
 
     result = {"listening": [], "structure": [], "reading": []}
@@ -116,7 +116,7 @@ def get_questions_for_date(target_date: str = None) -> dict:
 
 
 def add_question(row_data):
-    ws = get_sheet("Questions")
+    ws = _get_sheet("Questions")
 
     try:
         values = [
@@ -142,7 +142,7 @@ def add_question(row_data):
 
 
 def delete_questions_for_date(target_date: str):
-    ws = get_sheet("Questions")
+    ws = _get_sheet("Questions")
     records = ws.get_all_records()
     rows_to_delete = [i for i, r in enumerate(records, start=2)
                       if str(r.get("date", "")).strip() == target_date]
@@ -159,7 +159,7 @@ def save_score(username: str, name: str, listening: int, structure: int, reading
     today = date.today().isoformat()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    ws = get_sheet("Scores")
+    ws = _get_sheet("Scores")
     ws.append_row([username, name, today, listening, structure, reading, total, f"{accuracy}%", timestamp])
     get_user_scores.clear()
     get_all_scores.clear()
@@ -167,7 +167,7 @@ def save_score(username: str, name: str, listening: int, structure: int, reading
 
 @st.cache_data(ttl=60)
 def get_user_scores(username: str) -> pd.DataFrame:
-    ws = get_sheet("Scores")
+    ws = _get_sheet("Scores")
     records = ws.get_all_records()
     rows = [r for r in records if r.get("username") == username]
     if not rows:
@@ -179,7 +179,7 @@ def get_user_scores(username: str) -> pd.DataFrame:
 
 @st.cache_data(ttl=60)
 def get_all_scores() -> pd.DataFrame:
-    ws = get_sheet("Scores")
+    ws = _get_sheet("Scores")
     records = ws.get_all_records()
     if not records:
         return pd.DataFrame()

@@ -23,9 +23,4 @@ init_session()
 # Routing berdasarkan login state
 if not st.session_state.get("logged_in"):
     login_page()
-else:
-    role = st.session_state.get("role", "user")
-    if role == "admin":
-        st.switch_page("pages/2_Admin.py")
-    else:
-        st.switch_page("pages/1_Dashboard.py")
+    st.stop()

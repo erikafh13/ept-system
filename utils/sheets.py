@@ -21,17 +21,25 @@ SCOPES = [
 
 
 @st.cache_resource(ttl=300)
-def _get_client():
-    creds = Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"], scopes=SCOPES
-    )
+def get_client():
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+
     return gspread.authorize(creds)
 
 
-def _get_sheet(sheet_name: str):
-    client = _get_client()
+def get_sheet(sheet_name):
+    client = get_client()
     spreadsheet_id = st.secrets["spreadsheet"]["id"]
     return client.open_by_key(spreadsheet_id).worksheet(sheet_name)
+
+def sanitize(value):
+    if pd.isna(value):
+        return ""
+    return value
 
 
 # ── Users ───────────────────────────────────────────────────────────────────
@@ -107,22 +115,30 @@ def get_questions_for_date(target_date: str = None) -> dict:
     return result
 
 
-def add_question(row_data: dict):
-    ws = _get_sheet("Questions")
-    ws.append_row([
-        row_data.get("date", date.today().isoformat()),
-        row_data.get("no", ""),
-        row_data.get("type", ""),
-        row_data.get("question", ""),
-        row_data.get("option_a", ""),
-        row_data.get("option_b", ""),
-        row_data.get("option_c", ""),
-        row_data.get("option_d", ""),
-        row_data.get("correct", 0),
-        row_data.get("script", ""),
-        row_data.get("passage", ""),
-    ])
-    get_questions_for_date.clear()
+def add_question(row_data):
+    ws = get_sheet("Questions")
+
+    try:
+        values = [
+            sanitize(row_data.get("date", date.today().isoformat())),
+            sanitize(row_data.get("pool_id", "")),   # ✅ NEW
+            sanitize(row_data.get("no", "")),
+            sanitize(row_data.get("type", "")),
+            sanitize(row_data.get("question", "")),
+            sanitize(row_data.get("option_a", "")),
+            sanitize(row_data.get("option_b", "")),
+            sanitize(row_data.get("option_c", "")),
+            sanitize(row_data.get("option_d", "")),
+            sanitize(row_data.get("correct", "")),
+            sanitize(row_data.get("script", "")),
+            sanitize(row_data.get("passage", "")),
+            sanitize(row_data.get("difficulty", "")),  # ✅ NEW
+        ]
+
+        ws.append_row(values)
+
+    except Exception as e:
+        raise Exception(f"Gagal insert ke sheet: {e}")
 
 
 def delete_questions_for_date(target_date: str):

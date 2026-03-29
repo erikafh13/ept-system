@@ -1,5 +1,6 @@
 """pages/4_Result.py — Hasil simulasi + notifikasi WA otomatis."""
 
+import os
 import streamlit as st
 from utils.session import init_session
 from utils.sheets import get_user_scores, get_user_registry
@@ -7,7 +8,8 @@ from utils.whatsapp import notify_user_result
 
 st.set_page_config(page_title="Hasil Simulasi — EPT Pro", page_icon="🏆", layout="centered")
 
-with open("assets/style.css") as f:
+css_path = os.path.join(os.path.dirname(__file__), "..", "assets", "style.css")
+with open(css_path, encoding="utf-8") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 init_session()
@@ -21,7 +23,6 @@ if not score:
 
 username = st.session_state.username
 name     = st.session_state.name
-
 total    = score["listening"] + score["structure"] + score["reading"]
 accuracy = round((total / 45) * 100, 1)
 
@@ -31,7 +32,7 @@ elif accuracy >= 55: grade, gc, gm = "C", "#F59E0B", "Cukup baik, masih bisa leb
 elif accuracy >= 40: grade, gc, gm = "D", "#F97316", "Perlu lebih banyak latihan 📚"
 else:                grade, gc, gm = "E", "#EF4444", "Jangan menyerah, terus berlatih! 🔥"
 
-# Kirim WA hasil otomatis (sekali saja, pakai flag session)
+# Kirim WA hasil (sekali saja per sesi, pakai flag)
 if not st.session_state.get("wa_result_sent"):
     try:
         users = get_user_registry()
@@ -42,7 +43,7 @@ if not st.session_state.get("wa_result_sent"):
         pass
     st.session_state.wa_result_sent = True
 
-# ── UI ──────────────────────────────────────────────────────────────────────
+# ── UI ────────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="result-hero">
     <div class="result-grade" style="color:{gc};">{grade}</div>
@@ -55,11 +56,11 @@ for col, label, val, color in zip(
     [c1, c2, c3, c4],
     ["Listening", "Structure", "Reading", "Total"],
     [score["listening"], score["structure"], score["reading"], total],
-    ["blue", "purple", "orange", "green"]
+    ["blue", "purple", "orange", "green"],
 ):
     col.markdown(f"""<div class="score-card {color}">
         <div class="score-num">{val}</div>
-        <div class="score-lbl">{label}<br><small>/ {"15" if label != "Total" else "45"}</small></div>
+        <div class="score-lbl">{label}<br><small>/{"15" if label != "Total" else "45"}</small></div>
     </div>""", unsafe_allow_html=True)
 
 st.markdown(f"""
@@ -83,15 +84,15 @@ if len(df) >= 2:
     </div>""", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-# Rekomendasi otomatis berdasarkan skor
+# Rekomendasi otomatis
 st.markdown("### 💡 Rekomendasi Belajar")
 recs = []
 if score["listening"] < 10:
-    recs.append("🎧 **Listening** — Perbanyak mendengarkan podcast/lagu berbahasa Inggris setiap hari.")
+    recs.append("🎧 **Listening** — Dengarkan BBC Learning English atau VOA setiap hari.")
 if score["structure"] < 10:
-    recs.append("📐 **Structure** — Fokus pada grammar: tenses, subject-verb agreement, dan conjunctions.")
+    recs.append("📐 **Structure** — Fokus grammar: tenses, passive voice, conditional sentences.")
 if score["reading"] < 10:
-    recs.append("📖 **Reading** — Latih membaca artikel bahasa Inggris dan identifikasi main idea.")
+    recs.append("📖 **Reading** — Latih skimming & scanning di artikel berbahasa Inggris.")
 if not recs:
     recs.append("🌟 Performa sangat baik! Pertahankan dan terus latihan setiap hari.")
 for r in recs:
@@ -102,12 +103,15 @@ st.markdown("<br>", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
     if st.button("🏠 Kembali ke Dashboard", use_container_width=True, type="primary"):
-        st.session_state.last_score    = None
+        st.session_state.last_score     = None
         st.session_state.wa_result_sent = False
         st.switch_page("pages/1_Dashboard.py")
 with col2:
     if not df.empty:
-        st.download_button("⬇️ Unduh Riwayat CSV",
+        st.download_button(
+            "⬇️ Unduh Riwayat CSV",
             data=df.to_csv(index=False).encode("utf-8"),
-            file_name=f"skor_ept_{username}.csv", mime="text/csv",
-            use_container_width=True)
+            file_name=f"skor_ept_{username}.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )

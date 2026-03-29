@@ -1,10 +1,17 @@
 """utils/auth.py — Login, logout, dan validasi user."""
 
+import os
 import streamlit as st
 from utils.sheets import get_user_registry
 
 
-def login_page():
+def _load_css() -> None:
+    css_path = os.path.join(os.path.dirname(__file__), "..", "assets", "style.css")
+    with open(css_path, encoding="utf-8") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
+def login_page() -> None:
     """Render halaman login."""
     col1, col2, col3 = st.columns([1, 1.4, 1])
     with col2:
@@ -18,8 +25,8 @@ def login_page():
         """, unsafe_allow_html=True)
 
         with st.form("login_form"):
-            username = st.text_input("Username", placeholder="Masukkan username...")
-            password = st.text_input("Password", type="password", placeholder="••••••••")
+            username  = st.text_input("Username",  placeholder="Masukkan username...")
+            password  = st.text_input("Password",  type="password", placeholder="••••••••")
             submitted = st.form_submit_button("🚀 Masuk Sekarang", use_container_width=True)
 
         if submitted:
@@ -27,14 +34,19 @@ def login_page():
                 st.error("Username dan password wajib diisi.")
                 return
 
-            user_data = get_user_registry()
+            try:
+                user_data = get_user_registry()
+            except Exception as e:
+                st.error(f"Gagal terhubung ke database: {e}")
+                return
+
             if username in user_data:
                 user = user_data[username]
                 if user["password"] == password:
                     st.session_state.logged_in = True
-                    st.session_state.username = username
-                    st.session_state.name = user.get("name", username)
-                    st.session_state.role = user.get("role", "user")
+                    st.session_state.username  = username
+                    st.session_state.name      = user.get("name", username)
+                    st.session_state.role      = user.get("role", "user")
                     st.rerun()
                 else:
                     st.error("❌ Password salah.")
@@ -44,8 +56,8 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
 
-def logout():
-    """Reset semua session state."""
+def logout() -> None:
+    """Hapus semua session state dan kembali ke login."""
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()

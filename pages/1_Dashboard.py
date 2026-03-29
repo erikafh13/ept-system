@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from utils.session import init_session
 from utils.auth import logout
 from utils.sheets import get_questions_for_date, get_user_scores, has_done_test_today
+from utils.question_pool import get_or_create_todays_questions, get_pool_stats
 from utils.whatsapp import notify_admin_soal_belum_ada
 
 st.set_page_config(page_title="Dashboard — EPT Pro", page_icon="📊", layout="wide")
@@ -38,7 +39,14 @@ st.markdown(f"""
 </div>""", unsafe_allow_html=True)
 
 # Data
-questions  = get_questions_for_date()
+# Coba ambil dari Pool system dulu, fallback ke soal manual
+pool_stats = get_pool_stats()
+if pool_stats.get("total", 0) >= 45:
+    questions = get_or_create_todays_questions(per_section=15)
+    using_pool = True
+else:
+    questions = get_questions_for_date()
+    using_pool = False
 total_q    = sum(len(v) for v in questions.values())
 done_today = has_done_test_today(username)
 df_scores  = get_user_scores(username)

@@ -7,7 +7,7 @@ Daftar di https://fonnte.com dan dapatkan token device kamu.
 Tambahkan ke .streamlit/secrets.toml:
   [whatsapp]
   token = "TOKEN_FONNTE_KAMU"
-  admin_number = "6283164090690"    # nomor WA admin (format internasional)
+  admin_number = "628123456789"    # nomor WA admin (format internasional)
 """
 
 import streamlit as st

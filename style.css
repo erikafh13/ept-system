@@ -1,0 +1,296 @@
+/* assets/style.css — EPT Pro System Global Styles */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
+
+/* ── Base ─────────────────────────────────────────────────────────── */
+html, body, [class*="css"] {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Hide Streamlit default decoration */
+#MainMenu, footer, header { visibility: hidden; }
+.stDeployButton { display: none; }
+
+/* ── Login Card ───────────────────────────────────────────────────── */
+.login-card {
+    background: white;
+    border-radius: 28px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    border: 1px solid #F1F5F9;
+    margin-top: 3rem;
+}
+.login-header { text-align: center; margin-bottom: 2rem; }
+.login-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+.login-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin: 0;
+    line-height: 1.1;
+}
+.login-sub {
+    color: #94A3B8;
+    font-weight: 500;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* ── Navbar ───────────────────────────────────────────────────────── */
+.nav-logo {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1E40AF;
+    letter-spacing: -0.02em;
+}
+
+/* ── Page Header ──────────────────────────────────────────────────── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+.greeting { font-size: 1.8rem; font-weight: 800; color: #0F172A; }
+.name-highlight { color: #2563EB; }
+.date-badge {
+    background: #EFF6FF;
+    color: #1D4ED8;
+    padding: 0.5rem 1.25rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+/* ── Stat Cards ───────────────────────────────────────────────────── */
+.stat-card {
+    border-radius: 20px;
+    padding: 1.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.stat-card.blue   { background:#EFF6FF; border: 2px solid #BFDBFE; }
+.stat-card.green  { background:#F0FDF4; border: 2px solid #BBF7D0; }
+.stat-card.red    { background:#FEF2F2; border: 2px solid #FECACA; }
+.stat-card.purple { background:#FAF5FF; border: 2px solid #E9D5FF; }
+.stat-card.orange { background:#FFF7ED; border: 2px solid #FED7AA; }
+
+.stat-num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0F172A;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+}
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 0.5rem;
+}
+
+/* ── Action Cards ─────────────────────────────────────────────────── */
+.action-card {
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 1rem;
+    height: 100%;
+}
+.action-card.primary {
+    background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+    color: white;
+}
+.action-card.primary h3 { color: white !important; }
+.action-card.secondary {
+    background: white;
+    border: 2px solid #E2E8F0;
+}
+
+/* ── Test UI ──────────────────────────────────────────────────────── */
+.test-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 1rem 1.5rem;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #E2E8F0;
+}
+.test-section-badge {
+    background: #1E40AF;
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.test-progress-label { color: #64748B; font-size: 0.85rem; font-weight: 600; }
+
+.question-box {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    border: 2px solid #E2E8F0;
+    margin-bottom: 1.5rem;
+}
+.question-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0F172A;
+    line-height: 1.6;
+}
+
+/* ── TTS Box ──────────────────────────────────────────────────────── */
+.tts-container {
+    background: #0F172A;
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+    text-align: center;
+}
+.tts-script {
+    color: #94A3B8;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+.tts-btn {
+    background: #2563EB;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 100px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    margin: 0 0.25rem;
+    transition: background 0.2s;
+}
+.tts-btn:hover { background: #1D4ED8; }
+.tts-btn.secondary { background: #475569; }
+.tts-btn.secondary:hover { background: #334155; }
+
+/* ── Passage Box ──────────────────────────────────────────────────── */
+.passage-box {
+    background: #F8FAFC;
+    border-left: 4px solid #3B82F6;
+    border-radius: 0 12px 12px 0;
+    padding: 1.25rem 1.5rem;
+    line-height: 1.8;
+    color: #1E293B;
+    font-size: 0.95rem;
+}
+
+/* ── Result Page ──────────────────────────────────────────────────── */
+.result-hero {
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+}
+.result-grade {
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+}
+.result-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin: 0.5rem 0 0.25rem;
+}
+.result-msg { color: #64748B; font-size: 1rem; font-weight: 500; }
+
+.score-card {
+    border-radius: 20px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.score-card.blue   { background: #EFF6FF; border: 2px solid #BFDBFE; }
+.score-card.purple { background: #FAF5FF; border: 2px solid #E9D5FF; }
+.score-card.orange { background: #FFF7ED; border: 2px solid #FED7AA; }
+.score-card.green  { background: #F0FDF4; border: 2px solid #BBF7D0; }
+.score-num { font-size: 2.5rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #0F172A; }
+.score-lbl { font-size: 0.75rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.accuracy-bar-wrap { margin: 1.5rem 0; }
+.accuracy-label { font-size: 1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.5rem; }
+.accuracy-bar-bg { background: #E2E8F0; border-radius: 100px; height: 12px; overflow: hidden; }
+.accuracy-bar-fill { height: 100%; border-radius: 100px; transition: width 0.8s ease; }
+
+.comparison-box {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    color: #475569;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* ── Streamlit Component Overrides ──────────────────────────────────*/
+.stButton > button {
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    transition: all 0.15s ease !important;
+}
+.stButton > button[kind="primary"] {
+    background: #1E40AF !important;
+    border: none !important;
+}
+.stButton > button[kind="primary"]:hover {
+    background: #1D4ED8 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea,
+.stSelectbox > div > div {
+    border-radius: 12px !important;
+    border: 2px solid #E2E8F0 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 500 !important;
+}
+.stTextInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+    border-color: #2563EB !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1) !important;
+}
+
+.stTabs [data-baseweb="tab-list"] { gap: 0.5rem; }
+.stTabs [data-baseweb="tab"] {
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    padding: 0.5rem 1rem !important;
+}
+.stMetric { background: #F8FAFC; border-radius: 12px; padding: 1rem; }
+
+/* ── Timer Box ────────────────────────────────────────────────────── */
+.timer-box {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 0.4rem 0.8rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* ── Question Number ──────────────────────────────────────────────── */
+.question-num {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #94A3B8;
+    margin-bottom: 0.5rem;
+}

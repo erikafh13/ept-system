@@ -122,24 +122,27 @@ st.markdown("<br>", unsafe_allow_html=True)
 if section == "listening":
     with st.expander("🎧 Audio Listening", expanded=True):
 
-        script_text = q_data.get("script", "")
+        script_text = q_data.get("script", "").strip()
+
+        # pastikan cache ada (sekali saja)
+        if "audio_cache" not in st.session_state:
+            st.session_state.audio_cache = {}
 
         if script_text:
 
-            # Generate audio hanya jika soal berubah
-            if (
-                "tts_audio" not in st.session_state
-                or st.session_state.get("last_text") != script_text
-            ):
+            # generate audio hanya sekali per teks
+            if script_text not in st.session_state.audio_cache:
+
                 tts = gTTS(script_text, lang="en")
 
                 tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
                 tts.save(tmp_file.name)
 
-                st.session_state.tts_audio = tmp_file.name
-                st.session_state.last_text = script_text
+                st.session_state.audio_cache[script_text] = tmp_file.name
 
-            st.audio(st.session_state.tts_audio)
+            audio_path = st.session_state.audio_cache[script_text]
+
+            st.audio(audio_path)
 
         else:
             st.warning("Tidak ada teks untuk audio.")

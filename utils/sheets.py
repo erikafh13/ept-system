@@ -38,7 +38,7 @@ def _get_client() -> gspread.Client:
 
 @st.cache_resource
 def _get_sheet(sheet_name):
-    client = get_client()
+    client = _get_client()
     spreadsheet_id = st.secrets["spreadsheet"]["id"]
     return client.open_by_key(spreadsheet_id).worksheet(sheet_name)
 

@@ -127,11 +127,6 @@ if section == "listening":
         script_text = q_data.get("script", "").strip()
 
         if script_text:
-            st.markdown(
-                f'<div class="tts-script"><em>"{script_text}"</em></div>',
-                unsafe_allow_html=True
-            )
-
             # Ambil dari cache (SUPER CEPAT)
             audio_file = st.session_state.tts_cache.get(script_text)
 

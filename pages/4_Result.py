@@ -18,6 +18,9 @@ if not st.session_state.get("logged_in"):
     st.switch_page("app.py")
 
 score = st.session_state.get("last_score")
+questions = st.session_state.get("questions_today", {})
+answers   = st.session_state.get("answers", {})
+
 if not score:
     st.switch_page("pages/1_Dashboard.py")
 
@@ -86,6 +89,72 @@ if len(df) >= 2:
 
 # Rekomendasi otomatis
 st.markdown("### 💡 Rekomendasi Belajar")
+st.markdown("---")
+st.markdown("## 🧠 Review Jawaban & Pembahasan")
+
+sections = ["listening", "structure", "reading"]
+
+# 🔥 filter opsional
+show_wrong_only = st.checkbox("Tampilkan hanya jawaban salah")
+
+for sec in sections:
+    qs = questions.get(sec, [])
+    if not qs:
+        continue
+
+    st.markdown(f"### 📘 {sec.capitalize()}")
+
+    correct_count = 0
+
+    for i, q in enumerate(qs):
+        user_ans = answers.get(f"{sec}_{i}")
+        correct  = q.get("correct")
+
+        is_correct = user_ans == correct
+        if is_correct:
+            correct_count += 1
+
+        # filter kalau hanya ingin lihat salah
+        if show_wrong_only and is_correct:
+            continue
+
+        # warna box
+        bg_color = "#D1FAE5" if is_correct else "#FEE2E2"
+
+        st.markdown(f"""
+        <div style="background:{bg_color}; padding:15px; border-radius:10px; margin-bottom:10px;">
+            <b>Soal {i+1}</b><br>
+            {q.get('question')}
+        </div>
+        """, unsafe_allow_html=True)
+
+        # tampilkan opsi
+        for idx, opt in enumerate(q.get("options", [])):
+            label = f"{'ABCD'[idx]}. {opt}"
+
+            if idx == correct:
+                st.success(f"✅ {label}")
+            elif idx == user_ans:
+                st.error(f"❌ {label}")
+            else:
+                st.write(label)
+
+        # status
+        if is_correct:
+            st.success("Jawaban kamu benar ✅")
+        else:
+            st.error("Jawaban kamu salah ❌")
+
+        # 🔥 pembahasan
+        if q.get("explanation"):
+            with st.expander("💡 Pembahasan"):
+                st.write(q["explanation"])
+
+        st.markdown("---")
+
+    # statistik per section
+    st.info(f"Skor {sec.capitalize()}: {correct_count}/{len(qs)}")
+    
 recs = []
 if score["listening"] < 10:
     recs.append("🎧 **Listening** — Dengarkan BBC Learning English atau VOA setiap hari.")

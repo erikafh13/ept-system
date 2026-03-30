@@ -42,15 +42,25 @@ st.markdown(f"""
     <div class="date-badge">📅 {date.today().strftime('%A, %d %B %Y')}</div>
 </div>""", unsafe_allow_html=True)
 
-# ── Ambil soal hari ini ───────────────────────────────────────────────────────
-# Prioritas: Pool System (acak) → Manual (per tanggal)
-pool_stats = get_pool_stats()
-if pool_stats.get("total", 0) >= 45:
-    questions  = get_or_create_todays_questions(per_section=15)
-    soal_mode  = "pool"
-else:
-    questions  = get_questions_for_date()
-    soal_mode  = "manual"
+# ── Ambil soal hari ini (HANYA SEKALI) ───────────────────────────────
+
+if "questions_today" not in st.session_state:
+
+    pool_stats = get_pool_stats()
+
+    if pool_stats.get("total", 0) >= 45:
+        questions = get_or_create_todays_questions(per_section=15)
+        st.session_state.soal_mode = "pool"
+    else:
+        questions = get_questions_for_date()
+        st.session_state.soal_mode = "manual"
+
+    st.session_state.questions_today = questions
+
+# gunakan yang sudah disimpan
+questions = st.session_state.questions_today
+soal_mode = st.session_state.soal_mode
+
 
 total_q    = sum(len(v) for v in questions.values())
 done_today = has_done_test_today(username)

@@ -7,7 +7,15 @@ from datetime import date
 from utils.session import init_session
 from utils.sheets import save_score
 from utils.analytics import save_answer_log
-# FIX: hapus gTTS dan tempfile — diganti Web Speech API (0 delay, tidak perlu internet)
+from gtts import gTTS
+import tempfile
+
+@st.cache_data(show_spinner=False)
+def generate_tts(text):
+    tts = gTTS(text=text, lang='en')
+    fp = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+    tts.save(fp.name)
+    return fp.name
 
 st.set_page_config(page_title="Simulasi EPT", page_icon="📝", layout="centered")
 
@@ -36,6 +44,15 @@ section   = st.session_state.test_section
 idx       = st.session_state.test_idx
 questions = st.session_state.questions_today
 answers   = st.session_state.answers
+
+# PRELOAD semua audio sekali di awal
+if "tts_cache" not in st.session_state:
+    st.session_state.tts_cache = {}
+    for sec in questions:
+        for q in questions[sec]:
+            script = q.get("script", "").strip()
+            if script:
+                st.session_state.tts_cache[script] = generate_tts(script)
 
 # ── Timer ─────────────────────────────────────────────────────────────────────
 if "test_start_time" not in st.session_state:
@@ -108,38 +125,23 @@ st.markdown("<br>", unsafe_allow_html=True)
 if section == "listening":
     with st.expander("🎧 Audio Listening", expanded=True):
         script_text = q_data.get("script", "").strip()
+
         if script_text:
-            # FIX: Ganti gTTS (lambat, butuh internet) dengan Web Speech API
-            # Web Speech API: bawaan browser, INSTAN, 0 delay, tidak butuh internet.
-            # Cara kerja: JavaScript langsung baca teks → suara keluar di browser user.
-            safe = (
-                script_text
-                .replace("\\", "\\\\")
-                .replace("'",  "\\'")
-                .replace('"',  '\\"')
-                .replace("\n", " ")
-                .replace("\r", "")
+            st.markdown(
+                f'<div class="tts-script"><em>"{script_text}"</em></div>',
+                unsafe_allow_html=True
             )
-            st.markdown(f"""
-            <div class="tts-container">
-                <p class="tts-script"><em>"{script_text}"</em></p>
-                <button class="tts-btn" onclick="speakNow()">▶ Putar Audio</button>
-                <button class="tts-btn secondary" onclick="window.speechSynthesis.cancel()">■ Stop</button>
-            </div>
-            <script>
-            function speakNow() {{
-                window.speechSynthesis.cancel();
-                var u = new SpeechSynthesisUtterance('{safe}');
-                u.lang  = 'en-US';
-                u.rate  = 0.85;
-                u.pitch = 1.0;
-                window.speechSynthesis.speak(u);
-            }}
-            </script>
-            """, unsafe_allow_html=True)
+
+            # Ambil dari cache (SUPER CEPAT)
+            audio_file = st.session_state.tts_cache.get(script_text)
+
+            if audio_file:
+                st.audio(audio_file, format="audio/mp3")
+            else:
+                st.warning("Audio gagal dimuat.")
         else:
             st.info("Tidak ada teks audio untuk soal ini.")
-
+            
 elif section == "reading" and q_data.get("passage"):
     with st.expander("📖 Baca Passage", expanded=True):
         st.markdown(

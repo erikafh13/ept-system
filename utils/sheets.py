@@ -7,10 +7,9 @@ STRUKTUR SPREADSHEET (6 sheet):
   Sheet 3: "Scores"       → username | name | date | listening | structure | reading | total | accuracy | timestamp
   Sheet 4: "AnswerLog"    → username | date | question_date | section | q_no | is_correct | user_answer | correct_answer | timestamp
   Sheet 5: "QuestionPool" → pool_id | type | question | option_a | option_b | option_c | option_d | correct | script | passage | difficulty
-  Sheet 6: "DailyDraw"    → date | pool_id | no
+  Sheet 6: "DailyDraw"    → date | pool_id | no | type
 """
 
-import os
 import streamlit as st
 import gspread
 import pandas as pd
@@ -25,31 +24,24 @@ SCOPES = [
 
 @st.cache_resource(ttl=300)
 def _get_client() -> gspread.Client:
-    """
-    Buat Google Sheets client.
-    FIX: gspread v6+ tidak pakai gspread.authorize() lagi,
-    melainkan gspread.Client() dengan credentials langsung.
-    """
     creds = Credentials.from_service_account_info(
         st.secrets["gcp_service_account"], scopes=SCOPES
     )
     return gspread.Client(auth=creds)
 
 
-@st.cache_resource
-def _get_sheet(sheet_name):
+# FIX: _get_sheet TIDAK di-cache agar selalu fresh dan tidak stuck saat token expire.
+# Cache cukup di level _get_client() saja.
+def _get_sheet(sheet_name: str) -> gspread.Worksheet:
     client = _get_client()
     spreadsheet_id = st.secrets["spreadsheet"]["id"]
     return client.open_by_key(spreadsheet_id).worksheet(sheet_name)
 
-# ── Users ────────────────────────────────────────────────────────────────────
+
+# ── Users ─────────────────────────────────────────────────────────────────────
 
 @st.cache_data(ttl=60)
 def get_user_registry() -> dict:
-    """
-    Ambil semua user dari sheet Users.
-    Return: { username: { password, name, role, phone } }
-    """
     ws = _get_sheet("Users")
     records = ws.get_all_records()
     return {
@@ -66,17 +58,15 @@ def get_user_registry() -> dict:
 
 def add_user(username: str, password: str, name: str,
              role: str = "user", phone: str = "") -> None:
-    """Tambah user baru ke sheet Users."""
     ws = _get_sheet("Users")
     ws.append_row([username, password, name, role, phone])
     get_user_registry.clear()
 
 
 def delete_user(username: str) -> None:
-    """Hapus user dari sheet Users berdasarkan username."""
     ws = _get_sheet("Users")
     records = ws.get_all_records()
-    for i, row in enumerate(records, start=2):  # baris 1 = header
+    for i, row in enumerate(records, start=2):
         if row.get("username") == username:
             ws.delete_rows(i)
             break
@@ -84,7 +74,6 @@ def delete_user(username: str) -> None:
 
 
 def get_all_user_phones() -> list:
-    """Return list { username, name, phone } untuk semua user yang punya nomor WA."""
     users = get_user_registry()
     return [
         {"username": u, "name": d["name"], "phone": d["phone"]}
@@ -93,20 +82,14 @@ def get_all_user_phones() -> list:
     ]
 
 
-# ── Questions (manual per tanggal) ───────────────────────────────────────────
+# ── Questions (manual per tanggal) ────────────────────────────────────────────
 
 @st.cache_data(ttl=300)
 def get_questions_for_date(target_date: str = None) -> dict:
-    """
-    Ambil soal manual untuk tanggal tertentu dari sheet Questions.
-    Return: { 'listening': [...], 'structure': [...], 'reading': [...] }
-    """
     if target_date is None:
         target_date = date.today().isoformat()
-
     ws = _get_sheet("Questions")
     records = ws.get_all_records()
-
     result: dict = {"listening": [], "structure": [], "reading": []}
     for row in records:
         if str(row.get("date", "")).strip() != target_date:
@@ -131,7 +114,6 @@ def get_questions_for_date(target_date: str = None) -> dict:
 
 
 def add_question(row_data: dict) -> None:
-    """Tambah satu soal manual ke sheet Questions."""
     ws = _get_sheet("Questions")
     ws.append_row([
         row_data.get("date",     date.today().isoformat()),
@@ -150,7 +132,6 @@ def add_question(row_data: dict) -> None:
 
 
 def delete_questions_for_date(target_date: str) -> None:
-    """Hapus semua soal manual untuk tanggal tertentu."""
     ws = _get_sheet("Questions")
     records = ws.get_all_records()
     rows_to_delete = [
@@ -162,30 +143,23 @@ def delete_questions_for_date(target_date: str) -> None:
     get_questions_for_date.clear()
 
 
-# ── Scores ───────────────────────────────────────────────────────────────────
+# ── Scores ────────────────────────────────────────────────────────────────────
 
 def save_score(username: str, name: str,
                listening: int, structure: int, reading: int) -> None:
-    """Simpan skor hasil simulasi ke sheet Scores."""
     total    = listening + structure + reading
     accuracy = round((total / 45) * 100, 1)
     today    = date.today().isoformat()
     ts       = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
     ws = _get_sheet("Scores")
-    ws.append_row([
-        username, name, today,
-        listening, structure, reading,
-        total, f"{accuracy}%", ts,
-    ])
-    # Clear cache agar data terbaru langsung muncul
+    ws.append_row([username, name, today, listening, structure, reading,
+                   total, f"{accuracy}%", ts])
     get_user_scores.clear()
     get_all_scores.clear()
 
 
 @st.cache_data(ttl=60)
 def get_user_scores(username: str) -> pd.DataFrame:
-    """Ambil riwayat skor seorang user sebagai DataFrame."""
     ws      = _get_sheet("Scores")
     records = ws.get_all_records()
     rows    = [r for r in records if r.get("username") == username]
@@ -194,27 +168,25 @@ def get_user_scores(username: str) -> pd.DataFrame:
             "date", "listening", "structure", "reading",
             "total", "accuracy", "timestamp",
         ])
-    df         = pd.DataFrame(rows)
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df          = pd.DataFrame(rows)
+    df["date"]  = pd.to_datetime(df["date"], errors="coerce")
     df["total"] = pd.to_numeric(df["total"], errors="coerce").fillna(0).astype(int)
     return df.sort_values("date", ascending=False).reset_index(drop=True)
 
 
 @st.cache_data(ttl=60)
 def get_all_scores() -> pd.DataFrame:
-    """Ambil semua skor (untuk admin & leaderboard)."""
     ws      = _get_sheet("Scores")
     records = ws.get_all_records()
     if not records:
         return pd.DataFrame()
-    df         = pd.DataFrame(records)
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df          = pd.DataFrame(records)
+    df["date"]  = pd.to_datetime(df["date"], errors="coerce")
     df["total"] = pd.to_numeric(df["total"], errors="coerce").fillna(0).astype(int)
     return df.sort_values("date", ascending=False).reset_index(drop=True)
 
 
 def has_done_test_today(username: str) -> bool:
-    """Cek apakah user sudah mengerjakan tes hari ini."""
     df = get_user_scores(username)
     if df.empty:
         return False

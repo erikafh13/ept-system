@@ -7,33 +7,28 @@ from datetime import date
 from utils.session import init_session
 from utils.sheets import save_score
 from utils.analytics import save_answer_log
-from gtts import gTTS
-import tempfile
+# FIX: hapus gTTS dan tempfile — diganti Web Speech API (0 delay, tidak perlu internet)
 
 st.set_page_config(page_title="Simulasi EPT", page_icon="📝", layout="centered")
 
 css_path = os.path.join(os.path.dirname(__file__), "..", "assets", "style.css")
-if "css_loaded" not in st.session_state:
-    with open(css_path, encoding="utf-8") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    st.session_state.css_loaded = True
+with open(css_path, encoding="utf-8") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 init_session()
 
-# Proteksi login TANPA redirect
 if not st.session_state.get("logged_in"):
     st.warning("Silakan login terlebih dahulu.")
     st.stop()
 
-# Proteksi test aktif TANPA redirect
 if not st.session_state.get("test_active"):
     st.warning("Silakan mulai test dari dashboard.")
     st.stop()
-    
+
 SECTIONS       = ["listening", "structure", "reading"]
 SECTION_ICONS  = {"listening": "🎧", "structure": "📐", "reading": "📖"}
 SECTION_LABELS = {"listening": "Listening", "structure": "Structure", "reading": "Reading"}
-TEST_SECONDS   = 90 * 60   # 90 menit
+TEST_SECONDS   = 90 * 60
 
 username  = st.session_state.username
 name      = st.session_state.name
@@ -43,7 +38,6 @@ questions = st.session_state.questions_today
 answers   = st.session_state.answers
 
 # ── Timer ─────────────────────────────────────────────────────────────────────
-# FIX: simpan start time sekali, hitung elapsed setiap render
 if "test_start_time" not in st.session_state:
     st.session_state.test_start_time = time.time()
 
@@ -61,7 +55,6 @@ def finish_test() -> None:
     qs  = st.session_state.questions_today
     ans = st.session_state.answers
     s_l = s_s = s_r = 0
-
     for i, q in enumerate(qs.get("listening", [])):
         if ans.get(f"listening_{i}") == q["correct"]:  s_l += 1
     for i, q in enumerate(qs.get("structure", [])):
@@ -71,22 +64,20 @@ def finish_test() -> None:
 
     save_score(username, name, s_l, s_s, s_r)
     save_answer_log(username, date.today().isoformat(), ans, qs)
-
-    st.session_state.last_score    = {"listening": s_l, "structure": s_s, "reading": s_r}
-    st.session_state.test_active   = False
+    st.session_state.last_score     = {"listening": s_l, "structure": s_s, "reading": s_r}
+    st.session_state.test_active    = False
     st.session_state.wa_result_sent = False
     if "test_start_time" in st.session_state:
         del st.session_state["test_start_time"]
     st.switch_page("pages/4_Result.py")
 
 
-# Auto-submit jika waktu habis
 if remaining <= 0:
     st.warning("⏰ Waktu habis! Jawaban dikumpulkan otomatis.")
     time.sleep(1)
     finish_test()
 
-# ── Header & progress ──────────────────────────────────────────────────────────
+# ── Header & progress ─────────────────────────────────────────────────────────
 current_list     = questions.get(section, [])
 total_in_section = len(current_list)
 if not current_list:
@@ -113,28 +104,42 @@ with col_timer:
 st.progress(total_done / total_all if total_all > 0 else 0)
 st.markdown("<br>", unsafe_allow_html=True)
 
+# ── Konten bagian ─────────────────────────────────────────────────────────────
 if section == "listening":
     with st.expander("🎧 Audio Listening", expanded=True):
-
         script_text = q_data.get("script", "").strip()
-
-        if "audio_cache" not in st.session_state:
-            st.session_state.audio_cache = {}
-
         if script_text:
-
-            if script_text not in st.session_state.audio_cache:
-
-                tts = gTTS(script_text, lang="en")
-                tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-                tts.save(tmp_file.name)
-
-                st.session_state.audio_cache[script_text] = tmp_file.name
-
-            st.audio(st.session_state.audio_cache[script_text])
+            # FIX: Ganti gTTS (lambat, butuh internet) dengan Web Speech API
+            # Web Speech API: bawaan browser, INSTAN, 0 delay, tidak butuh internet.
+            # Cara kerja: JavaScript langsung baca teks → suara keluar di browser user.
+            safe = (
+                script_text
+                .replace("\\", "\\\\")
+                .replace("'",  "\\'")
+                .replace('"',  '\\"')
+                .replace("\n", " ")
+                .replace("\r", "")
+            )
+            st.markdown(f"""
+            <div class="tts-container">
+                <p class="tts-script"><em>"{script_text}"</em></p>
+                <button class="tts-btn" onclick="speakNow()">▶ Putar Audio</button>
+                <button class="tts-btn secondary" onclick="window.speechSynthesis.cancel()">■ Stop</button>
+            </div>
+            <script>
+            function speakNow() {{
+                window.speechSynthesis.cancel();
+                var u = new SpeechSynthesisUtterance('{safe}');
+                u.lang  = 'en-US';
+                u.rate  = 0.85;
+                u.pitch = 1.0;
+                window.speechSynthesis.speak(u);
+            }}
+            </script>
+            """, unsafe_allow_html=True)
         else:
-            st.warning("Tidak ada teks untuk audio.")
-            
+            st.info("Tidak ada teks audio untuk soal ini.")
+
 elif section == "reading" and q_data.get("passage"):
     with st.expander("📖 Baca Passage", expanded=True):
         st.markdown(
@@ -151,12 +156,11 @@ st.markdown(f"""
 
 current_ans = answers.get(answer_key)
 for i, opt in enumerate(q_data.get("options", [])):
-    selected = current_ans == i
     if st.button(
         f"**{'ABCD'[i]}.** {opt}",
         key=f"opt_{answer_key}_{i}",
         use_container_width=True,
-        type="primary" if selected else "secondary",
+        type="primary" if current_ans == i else "secondary",
     ):
         st.session_state.answers[answer_key] = i
         st.rerun()
@@ -182,7 +186,6 @@ with col_back:
 with col_next:
     last_in_sec = idx == total_in_section - 1
     last_sec    = section == "reading"
-
     if last_in_sec and last_sec:
         label = "✅ Kumpulkan Jawaban"
     elif last_in_sec:
@@ -222,8 +225,6 @@ with st.sidebar:
     total_ans = len(answers)
     st.metric("Total Dijawab", f"{total_ans}/{total_all}")
     st.progress(total_ans / total_all if total_all > 0 else 0)
-
-    # Tombol darurat submit
     st.markdown("---")
     if st.button("⚠️ Submit Sekarang", type="secondary", use_container_width=True):
         finish_test()

@@ -36,12 +36,11 @@ def _get_client() -> gspread.Client:
     return gspread.Client(auth=creds)
 
 
-def _get_sheet(sheet_name: str) -> gspread.Worksheet:
-    """Ambil worksheet berdasarkan nama."""
-    client = _get_client()
+@st.cache_resource
+def get_sheet(sheet_name):
+    client = get_client()
     spreadsheet_id = st.secrets["spreadsheet"]["id"]
     return client.open_by_key(spreadsheet_id).worksheet(sheet_name)
-
 
 # ── Users ────────────────────────────────────────────────────────────────────
 

@@ -13,8 +13,10 @@ import tempfile
 st.set_page_config(page_title="Simulasi EPT", page_icon="📝", layout="centered")
 
 css_path = os.path.join(os.path.dirname(__file__), "..", "assets", "style.css")
-with open(css_path, encoding="utf-8") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+if "css_loaded" not in st.session_state:
+    with open(css_path, encoding="utf-8") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    st.session_state.css_loaded = True
 
 init_session()
 
@@ -108,14 +110,6 @@ with col_timer:
         ⏱ {mins:02d}:{secs:02d}
     </div>""", unsafe_allow_html=True)
 
-if "last_tick" not in st.session_state:
-    st.session_state.last_tick = time.time()
-
-# update tiap 3 detik (lebih aman)
-if remaining > 0 and (time.time() - st.session_state.last_tick >= 3):
-    st.session_state.last_tick = time.time()
-    st.rerun()
-
 st.progress(total_done / total_all if total_all > 0 else 0)
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -124,26 +118,20 @@ if section == "listening":
 
         script_text = q_data.get("script", "").strip()
 
-        # pastikan cache ada (sekali saja)
         if "audio_cache" not in st.session_state:
             st.session_state.audio_cache = {}
 
         if script_text:
 
-            # generate audio hanya sekali per teks
             if script_text not in st.session_state.audio_cache:
 
                 tts = gTTS(script_text, lang="en")
-
                 tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
                 tts.save(tmp_file.name)
 
                 st.session_state.audio_cache[script_text] = tmp_file.name
 
-            audio_path = st.session_state.audio_cache[script_text]
-
-            st.audio(audio_path)
-
+            st.audio(st.session_state.audio_cache[script_text])
         else:
             st.warning("Tidak ada teks untuk audio.")
             

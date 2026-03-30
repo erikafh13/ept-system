@@ -42,25 +42,20 @@ st.markdown(f"""
     <div class="date-badge">📅 {date.today().strftime('%A, %d %B %Y')}</div>
 </div>""", unsafe_allow_html=True)
 
-# ── Ambil soal hari ini (HANYA SEKALI) ───────────────────────────────
-
-if "questions_today" not in st.session_state:
-
+# ── Ambil soal hari ini (hanya sekali per sesi) ───────────────────────────────
+if "questions_today" not in st.session_state or not st.session_state.questions_today:
     pool_stats = get_pool_stats()
-
     if pool_stats.get("total", 0) >= 45:
         questions = get_or_create_todays_questions(per_section=15)
         st.session_state.soal_mode = "pool"
     else:
         questions = get_questions_for_date()
         st.session_state.soal_mode = "manual"
-
     st.session_state.questions_today = questions
 
-# gunakan yang sudah disimpan
 questions = st.session_state.questions_today
-soal_mode = st.session_state.soal_mode
-
+# FIX: pakai .get() dengan default agar tidak KeyError saat session direset
+soal_mode = st.session_state.get("soal_mode", "manual")
 
 total_q    = sum(len(v) for v in questions.values())
 done_today = has_done_test_today(username)
@@ -99,11 +94,9 @@ col_start, col_hist = st.columns(2)
 with col_start:
     st.markdown('<div class="action-card primary">', unsafe_allow_html=True)
     st.markdown("### 🚀 Simulasi EPT Hari Ini")
-
     if done_today:
         st.success("✅ Kamu sudah mengerjakan tes hari ini!")
         st.markdown("Soal baru tersedia besok.")
-
     elif total_q < 45:
         st.error(f"⚠️ Soal belum lengkap ({total_q}/45). Hubungi admin.")
         if st.button("📲 Ingatkan Admin via WhatsApp", key="wa_admin"):
@@ -112,7 +105,6 @@ with col_start:
                 st.success("Notifikasi terkirim ke admin!")
             else:
                 st.warning("Fitur WA belum dikonfigurasi. Isi token di secrets.toml.")
-
     else:
         mode_label = "🎲 Soal Acak (Pool)" if soal_mode == "pool" else "📋 Soal Manual"
         st.markdown(f"""
@@ -156,7 +148,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ── Grafik progress ───────────────────────────────────────────────────────────
 if not df_scores.empty and len(df_scores) > 1:
     st.markdown("### 📈 Grafik Progress 30 Hari Terakhir")
-    chart_df           = df_scores.head(30).sort_values("date").copy()
+    chart_df             = df_scores.head(30).sort_values("date").copy()
     chart_df["date_str"] = chart_df["date"].dt.strftime("%d %b")
     melted = chart_df[["date_str", "listening", "structure", "reading", "total"]].melt(
         id_vars="date_str", var_name="Bagian", value_name="Skor"
